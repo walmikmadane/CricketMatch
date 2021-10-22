@@ -4,27 +4,34 @@ import java.util.Arrays;
 
 public enum Delivery
 {
-    WD(1,false,false, "wd"),
-    NB(1, false, false, "nb"),
-    ZERO(0,false,true,"0"),
-    ONE(1, false, true, "1"),
-    TWO(2, false, true, "2"),
-    THREE(3, false, true, "3"),
-    FOUR(4, false, true, "4"),
-    SIX(6,false, true, "6"),
-    W(0, true, true, "w")
+    WD(1,false,false, "wd", false),
+    NB(1, false, false, "nb", false),
+    ZERO(0,false,true,"0", false),
+    ONE(1, false, true, "1", false),
+    TWO(2, false, true, "2", false),
+    THREE(3, false, true, "3", false),
+    FOUR(4, false, true, "4", false),
+    SIX(6,false, true, "6", false),
+    W(0, true, true, "w", false),
+    R0(0, false,true, "r0", true),
+    R1(1, false, true, "r1", true),
+    R2(2, false, true, "r2", true),
+    R3(3, false, true, "r3", true)
     ;
     int value;
     String text;
     boolean isWicket;
+    boolean isRunOut ;
+
     boolean validDelivery;
 
-    Delivery(int value, boolean isWicket, boolean validDelivery, String text)
+    Delivery(int value, boolean isWicket, boolean validDelivery, String text, boolean isRunOut)
     {
         this.value = value;
         this.isWicket = isWicket;
         this.validDelivery = validDelivery;
         this.text = text;
+        this.isRunOut = isRunOut;
     }
 
     public static Delivery fromText(String text)
@@ -75,5 +82,15 @@ public enum Delivery
     public void setValidDelivery(boolean validDelivery)
     {
         this.validDelivery = validDelivery;
+    }
+
+    public boolean isRunOut()
+    {
+        return isRunOut;
+    }
+
+    public void setRunOut(boolean runOut)
+    {
+        isRunOut = runOut;
     }
 }

@@ -68,4 +68,9 @@ public class BattingStat extends PlayerStats
                 strikeRate = ((double)runsScored/(double)ballsPlayed)*100;
         }
     }
+
+    public void proceessDeliveryForRunout(Delivery delivery)
+    {
+        isOut = true;
+    }
 }

@@ -29,7 +29,7 @@ public class Inning implements InningService
     private long validDeliveries;
     private long extraRuns;
 
-    private Scanner scanner ;
+    private Scanner scanner;
 
 
     private static InputService inputService = new InputService();
@@ -37,18 +37,36 @@ public class Inning implements InningService
     @Override
     public void processDelivery(Delivery delivery, DeliveryContext deliveryContext)
     {
+        Player player = null;
+        if(delivery.isRunOut())
+        {
+             player = getOutBatsman(delivery, deliveryContext);
+        }
         // process delivery for batsman
         deliveryContext.getOnStrike().getBattingStat().processDelivery(delivery);
 
         // process delivery for bowler
         deliveryContext.getBowler().getBowlingStat().processDelivery(delivery);
 
+        // Process Delivery for Run-out for batsman
+        if(Objects.nonNull(player))
+        {
+            if(player.getName().equals(deliveryContext.getOnStrike().getName()))
+                deliveryContext.getOnStrike().getBattingStat().proceessDeliveryForRunout(delivery);
+
+            if(player.getName().equals(deliveryContext.getNonStrike().getName()))
+                deliveryContext.getNonStrike().getBattingStat().proceessDeliveryForRunout(delivery);
+        }
+
+
         //process delivery for match stats..
 
-        if (delivery.isWicket())
+        if (delivery.isWicket() || delivery.isRunOut())
         {
             wickets++;
             validDeliveries++;
+            if(delivery.isRunOut())
+                totalRunScored+=delivery.getValue();
         } else
         {
             if (delivery.isValidDelivery())
@@ -57,12 +75,34 @@ public class Inning implements InningService
             }
 
             totalRunScored += delivery.getValue();
-            if(delivery.getText().equals("nb") || delivery.getText().equals("wd"))
+            if (delivery.getText().equals("nb") || delivery.getText().equals("wd"))
+            {
                 extraRuns++;
+            }
         }
         calculateOvers();
-        if(overCompleted(delivery))
+       /* if(overCompleted(delivery))
+        {
             printInningStat();
+        }*/
+
+    }
+
+    public Player getOutBatsman(Delivery delivery, DeliveryContext deliveryContext)
+    {
+        switch (delivery.getValue())
+        {
+            case 0:
+                return deliveryContext.getNonStrike();
+            case 1:
+                return deliveryContext.getOnStrike();
+            case 2:
+                return deliveryContext.getNonStrike();
+            case 3:
+                return deliveryContext.getOnStrike();
+            default:
+                return null;
+        }
     }
 
     public void calculateOvers()
@@ -71,10 +111,10 @@ public class Inning implements InningService
     }
 
     @Override
-    public void printInningStat()
+    public void printInningStat(DeliveryContext deliveryContext)
     {
         System.out.println("Batter Team:" + battingTeam.getName());
-        printBattingTeamStats();
+        printBattingTeamStats(deliveryContext);
         System.out.println("Total Runs:" + totalRunScored);
         System.out.println("Total Wickets:" + wickets);
         System.out.println("Extras:" + extraRuns);
@@ -82,14 +122,26 @@ public class Inning implements InningService
     }
 
     @Override
-    public void printBattingTeamStats()
+    public void printBattingTeamStats(
+        DeliveryContext deliveryContext)
     {
         Iterator<Player> iterator = battingTeam.getBatsman().iterator();
         System.out.println("Batsman  Run  balls  4s  6s  SR.");
         while (iterator.hasNext())
         {
             Player player = iterator.next();
-            System.out.print(player.getName() + "    ");
+            boolean onstrike = false;
+            if (Objects.nonNull(deliveryContext) && deliveryContext.getOnStrike().getName()
+                .equals(player.getName()))
+            {
+                onstrike = true;
+            }
+            System.out.print(player.getName());
+            if (onstrike)
+            {
+                System.out.print("*");
+            }
+            System.out.print("  ");
             player.getBattingStat().printStat();
         }
     }
@@ -115,7 +167,7 @@ public class Inning implements InningService
     {
         System.out
             .println("Overs:" + overs + "  Total Runs:" + totalRunScored + "  Wickets:" + wickets);
-        printBattingTeamStats();
+        printBattingTeamStats(null);
     }
 
     @Override
@@ -124,10 +176,12 @@ public class Inning implements InningService
         int totalMatchOvers, int totalWickets, boolean secondInning,
         Inning firstInning)
     {
-        if(wickets >= totalWickets-1)
+        if (wickets >= totalWickets - 1)
+        {
             return null;
+        }
 
-        if(secondInning && totalRunScored > firstInning.getTotalRunScored())
+        if (secondInning && totalRunScored > firstInning.getTotalRunScored())
         {
             return null;
         }
@@ -141,8 +195,29 @@ public class Inning implements InningService
             battingTeam.getBatsman().add(batsman);
             deliveryContext.setOnStrike(battingTeam.getBattingOrder().poll());
 
+        }else if(delivery.isRunOut())
+        {
+            // check which batsman got out
+            Player player = getOutBatsman(delivery, deliveryContext);
+            if(player.getName().equals(deliveryContext.getOnStrike().getName()))
+            {
+                // set new batsman on strike
+                Player batsman = deliveryContext.getOnStrike();
+                battingTeam.getBattingOrder().remove(batsman);
+                battingTeam.getBatsman().add(batsman);
+                deliveryContext.setOnStrike(battingTeam.getBattingOrder().poll());
+
+            }else
+            {
+                // set new batsma on non strike
+                Player batsman = deliveryContext.getNonStrike();
+                battingTeam.getBattingOrder().remove(batsman);
+                battingTeam.getBatsman().add(batsman);
+                deliveryContext.setNonStrike(battingTeam.getBattingOrder().poll());
+
+            }
         }
-        if(isStrikeRotated(delivery))
+        if (isStrikeRotated(delivery))
         {
             //Rotate strikes......
             Player tmp = deliveryContext.getNonStrike();
@@ -152,13 +227,12 @@ public class Inning implements InningService
         if (overCompleted(delivery))
         {
             // Check for inning completeness...
-            if(totalMatchOvers*6 == validDeliveries)
+            if (totalMatchOvers * 6 == validDeliveries)
             {
-                if(deliveryContext.isFirstInningCompleted())
+                if (deliveryContext.isFirstInningCompleted())
                 {
                     deliveryContext.setSecondInningCompleted(true);
-                }
-                else
+                } else
                 {
                     deliveryContext.setFirstInningCompleted(true);
                 }
@@ -187,6 +261,12 @@ public class Inning implements InningService
                 System.out.println("Invalid player name provided...");
             }
 
+            // Change strike of batsman
+            Player tmp = deliveryContext.getNonStrike();
+            deliveryContext.setNonStrike(deliveryContext.getOnStrike());
+            deliveryContext.setOnStrike(tmp);
+
+
         }
         deliveryContext.setCurrentDeliveryOfInning(this.validDeliveries);
         return deliveryContext;
@@ -194,15 +274,19 @@ public class Inning implements InningService
 
     public boolean overCompleted(Delivery delivery)
     {
-        if(!delivery.isValidDelivery())
+        if (!delivery.isValidDelivery())
+        {
             return false;
+        }
         return validDeliveries % 6 == 0;
     }
 
     public boolean isStrikeRotated(Delivery delivery)
     {
-        if(delivery.getText().equals("1") || delivery.getText().equals("3"))
+        if (delivery.getText().equals("1") || delivery.getText().equals("3"))
+        {
             return true;
+        }
         return false;
     }
 

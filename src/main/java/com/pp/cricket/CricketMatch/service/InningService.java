@@ -6,8 +6,9 @@ import com.pp.cricket.CricketMatch.service.impl.Inning;
 
 public interface InningService
 {
-    public void printInningStat();
-    public void printBattingTeamStats();
+    public void printInningStat(DeliveryContext deliveryContext);
+    public void printBattingTeamStats(
+        DeliveryContext deliveryContext);
     public void printBowlingTeamStats();
     public void processDelivery(Delivery delivery, DeliveryContext deliveryContext);
     public void printOverStat();

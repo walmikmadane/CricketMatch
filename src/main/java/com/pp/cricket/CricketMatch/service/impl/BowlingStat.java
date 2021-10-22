@@ -1,6 +1,7 @@
 package com.pp.cricket.CricketMatch.service.impl;
 
 
+import com.pp.cricket.CricketMatch.model.Player;
 import com.pp.cricket.CricketMatch.model.enums.Delivery;
 import java.text.DecimalFormat;
 import lombok.Builder;
@@ -72,6 +73,13 @@ public class BowlingStat extends PlayerStats
                 maidenOver++;
         }
     }
+
+    @Override
+    public void proceessDeliveryForRunout(Delivery delivery)
+    {
+
+    }
+
     @Override
     public void printStat()
     {

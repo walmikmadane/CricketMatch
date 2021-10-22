@@ -117,6 +117,7 @@ public class CricketMatchApplication
                 match.setDeliveryContext(
                     inning1.getNextDeliveryContext(delivery, match.getDeliveryContext(),
                         totalOvers, totalPlayers, false, null));
+
                 if(delivery.isValidDelivery())
                     ballsCounter++;
 
@@ -124,6 +125,8 @@ public class CricketMatchApplication
                 if(Objects.isNull(match.getDeliveryContext()))
                     break;
             }
+            inning1.printInningStat(match.getDeliveryContext());
+
             // All out / Overs completed  condition...
             if(Objects.isNull(match.getDeliveryContext()))
                 break;
@@ -133,7 +136,7 @@ public class CricketMatchApplication
         System.out.println("First Inning finished...");
         System.out.println("First Inning Scorecard...");
         System.out.println("___________________________________________________");
-        inning1.printInningStat();
+        inning1.printInningStat(match.getDeliveryContext());
         System.out.println("___________________________________________________");
 
         System.out.println("Inning 2 Started..." + team2.getName() + " is batting..");
@@ -168,9 +171,11 @@ public class CricketMatchApplication
                 deliveryInput = deliveryInput.trim();
                 Delivery delivery = Delivery.fromText(deliveryInput);
                 inning2.processDelivery(delivery, match.getDeliveryContext());
+
                 match.setDeliveryContext(
                     inning2.getNextDeliveryContext(delivery, match.getDeliveryContext(),
                         totalOvers, totalPlayers, true, inning1));
+
 
                 if(delivery.isValidDelivery())
                     ballsCounter++;
@@ -179,6 +184,8 @@ public class CricketMatchApplication
                 if(Objects.isNull(match.getDeliveryContext()))
                     break;
             }
+
+            inning2.printInningStat(match.getDeliveryContext());
             // All out / Overs completed  condition...
             if(Objects.isNull(match.getDeliveryContext()))
                 break;
@@ -188,7 +195,7 @@ public class CricketMatchApplication
         System.out.println("Second Inning finished...");
         System.out.println("Second Inning Scorecard...");
         System.out.println("___________________________________________________");
-        inning2.printInningStat();
+        inning2.printInningStat(match.getDeliveryContext());
         System.out.println("___________________________________________________");
 
         System.out.println(".......MatchResult......");
